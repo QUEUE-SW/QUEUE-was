@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: QUEUE-was
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DATABASE_URL:default}
+    username: ${DATABASE_USERNAME:default}
+    password: ${DATABASE_PASSWORD:default}
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 50
+
+  profiles:
+    active: local
+
+jwt:
+  token:
+    access:
+      expire-time: ${JWT_ACCESS_EXPIRE_TIME:7200000}
+      secret-key: ${JWT_ACCESS_SECRET_KEY:thisisexamplesecretkeyforaccesstokenthisisexamplesecretkeyforaccesstokenthisisexamplesecretkey}
+
+springdoc:
+  swagger-ui:
+    persistAuthorization: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    com.queuewas: debug
+    org.hibernate.sql: debug
+    org.hibernate.orm.jdbc.bind: trace
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+logging:
+  level:
+    com.queuewas: info
+    org.hibernate.sql: info
+    org.hibernate.orm.jdbc.bind: off
+    com.zaxxer.hikari.HikariConfig: debug
+    com.zaxxer.hikari: trace
