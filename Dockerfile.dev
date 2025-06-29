@@ -1,0 +1,21 @@
+# open jdk 17 버전의 환경을 구성한다.
+FROM bellsoft/liberica-openjdk-alpine:17
+
+# 컨테이너 시간대 설정 (한국 KST)
+ENV TZ=Asia/Seoul
+
+# 컨테이너가 시작할 때 실행할 명령어
+CMD ["./gradlew", "clean", "build"]
+
+# build가 될 때 JAR_FILE이라는 변수 명에 build/libs/*.jar 선언
+# build/libs - gradle로 빌드했을 때 jar 파일이 생성되는 경로임
+ARG JAR_FILE=build/libs/*.jar
+
+COPY ${JAR_FILE} queue-was.jar
+
+ARG PROFILE=dev
+ENV PROFILE=${PROFILE}
+
+EXPOSE 8081
+
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-jar", "/queue-was.jar", "--spring.profiles.active=${PROFILE}"]
