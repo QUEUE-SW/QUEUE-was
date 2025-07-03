@@ -11,4 +11,8 @@ public class QueueUser {
 	private long joinedAt;
 	private int joinQueueNumber;
 
+	public static QueueUser create(String token, long joinedAt, int joinQueueNumber) {
+		return new QueueUser(token, joinedAt, joinQueueNumber);
+	}
+
 }
