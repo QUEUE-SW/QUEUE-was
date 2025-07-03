@@ -2,6 +2,7 @@ package com.queuewas.domains.queue.implement;
 
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Component;
 
@@ -17,33 +18,36 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class QueueManager {
 	private final Queue<QueueUser> queue;
-	private final Map<String, QueueStatus> statusMap;
+	private final Map<String, QueueUser> userMap;
+	private final AtomicLong globalIndex;
 
-	public void enqueue(QueueUser user) {
-		if (statusMap.containsKey(user.getToken())) {
+	public void enqueue(String token) {
+		if (userMap.containsKey(token)) {
 			throw new QueueException(QueueErrorCode.FAILED_JOIN_QUEUE);
 		}
+
+		long joinedAt = System.currentTimeMillis();
+		long joinQueueNumber = globalIndex.incrementAndGet();
+		QueueUser user = QueueUser.create(token, joinedAt, joinQueueNumber);
+
 		queue.add(user);
-		statusMap.put(user.getToken(), QueueStatus.WAITING);
+		userMap.put(token, user);
 	}
 
-	public int getQueueNumber(String token) {
-		int index = 1;
-		for (QueueUser user : queue) {
-			if (user.getToken().equals(token)) {
-				return index;
-			}
-			index++;
-		}
-		return index;
+	public long getQueueNumber(String token) {
+		QueueUser user = userMap.get(token);
+
+		long totalIndex = globalIndex.get();
+		long enterIndex = totalIndex - queue.size() + 1;
+		return user.getJoinQueueNumber() - enterIndex + 1;
 	}
 
 	public QueueStatus getStatus(String token) {
-		return statusMap.getOrDefault(token, QueueStatus.NONE);
+		return userMap.getOrDefault(token, null).getStatus();
 	}
 
 	public void remove(String token) {
-		statusMap.remove(token);
+		userMap.remove(token);
 	}
 
 }

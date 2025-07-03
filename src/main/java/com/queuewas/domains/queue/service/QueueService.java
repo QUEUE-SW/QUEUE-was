@@ -2,7 +2,6 @@ package com.queuewas.domains.queue.service;
 
 import org.springframework.stereotype.Service;
 
-import com.queuewas.domains.queue.domain.QueueUser;
 import com.queuewas.domains.queue.dto.request.QueueJoinReq;
 import com.queuewas.domains.queue.dto.response.QueueJoinRes;
 import com.queuewas.domains.queue.implement.QueueManager;
@@ -16,12 +15,10 @@ public class QueueService {
 
 	public QueueJoinRes join(QueueJoinReq queueJoinReq) {
 		String token = queueJoinReq.token();
-		long joinedAt = System.currentTimeMillis();
-		int queueNumber = queueManager.getQueueNumber(token);
+		queueManager.enqueue(token);
 
-		QueueUser user = QueueUser.create(token, joinedAt, queueNumber);
-		queueManager.enqueue(user);
+		long queueNumber = queueManager.getQueueNumber(token);
 
-		return QueueJoinRes.from(user);
+		return QueueJoinRes.from(queueNumber);
 	}
 }
