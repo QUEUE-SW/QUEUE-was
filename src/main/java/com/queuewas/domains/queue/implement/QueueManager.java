@@ -5,6 +5,7 @@ import java.util.Queue;
 
 import org.springframework.stereotype.Component;
 
+import com.queuewas.common.annotation.Implementation;
 import com.queuewas.common.exception.queue.QueueErrorCode;
 import com.queuewas.common.exception.queue.QueueException;
 import com.queuewas.domains.queue.domain.QueueUser;
@@ -12,7 +13,7 @@ import com.queuewas.domains.queue.type.QueueStatus;
 
 import lombok.RequiredArgsConstructor;
 
-@Component
+@Implementation
 @RequiredArgsConstructor
 public class QueueManager {
 	private final Queue<QueueUser> queue;
