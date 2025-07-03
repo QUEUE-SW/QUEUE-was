@@ -4,12 +4,12 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.queuewas.domains.queue.domain.QueueUser;
-import com.queuewas.domains.queue.type.QueueStatus;
 
 @Configuration
 public class QueueConfig {
@@ -20,7 +20,12 @@ public class QueueConfig {
 	}
 
 	@Bean
-	public Map<String, QueueStatus> statusMap() {
+	public Map<String, QueueUser> userMap() {
 		return new ConcurrentHashMap<>();
+	}
+
+	@Bean
+	public AtomicLong globalIndex() {
+		return new AtomicLong(0);
 	}
 }
