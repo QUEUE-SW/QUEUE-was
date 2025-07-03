@@ -1,9 +1,7 @@
-package com.queuewas.domains.queue;
+package com.queuewas.domains.queue.implement;
 
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.springframework.stereotype.Component;
 
