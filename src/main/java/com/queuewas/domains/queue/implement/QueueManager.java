@@ -42,8 +42,8 @@ public class QueueManager {
 		return user.getJoinQueueNumber() - enterIndex + 1;
 	}
 
-	public QueueStatus getStatus(String token) {
-		return userMap.getOrDefault(token, null).getStatus();
+	public QueueUser getQueueUser(String token) {
+		return userMap.getOrDefault(token, null);
 	}
 
 	public void remove(String token) {
