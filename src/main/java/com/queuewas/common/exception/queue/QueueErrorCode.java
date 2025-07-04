@@ -13,7 +13,8 @@ import lombok.RequiredArgsConstructor;
 public enum QueueErrorCode implements BaseErrorCode {
 
 	FAILED_JOIN_QUEUE(StatusCode.BAD_REQUEST, ReasonCode.INVALID_REQUEST, "대기열 진입에 실패했습니다."),
-	QUEUE_NOT_FOUND(StatusCode.NOT_FOUND, ReasonCode.REQUESTED_RESOURCE_NOT_FOUND, "해당하는 대기열 정보가 없습니다.");
+	QUEUE_NOT_FOUND(StatusCode.NOT_FOUND, ReasonCode.REQUESTED_RESOURCE_NOT_FOUND, "해당하는 대기열 정보가 없습니다."),
+	QUEUE_IS_NOT_ALLOWED(StatusCode.FORBIDDEN, ReasonCode.ACCESS_TO_THE_RESOURCE_IS_FORBIDDEN, "대기열 상태가 ALLOWED가 아닙니다.");
 
 	private final StatusCode statusCode;
 	private final ReasonCode reasonCode;
