@@ -9,6 +9,10 @@ public record SignInReq(
 	String identifier,
 
 	@NotBlank(message = "비밀번호를 입력해주세요.")
-	String password
+	String password,
+
+	@NotBlank(message = "UUID를 입력해주세요.")
+	String uuid
+
 ) {
 }
