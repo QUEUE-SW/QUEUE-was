@@ -4,8 +4,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.springframework.stereotype.Component;
-
 import com.queuewas.common.annotation.Implementation;
 import com.queuewas.common.exception.queue.QueueErrorCode;
 import com.queuewas.common.exception.queue.QueueException;
@@ -33,6 +31,17 @@ public class QueueManager {
 		queue.add(user);
 		userMap.put(token, user);
 	}
+
+	public void processQueue(int allowedCount) {
+		for (int i = 0; i < allowedCount; i++) {
+			QueueUser user = queue.poll();
+			if (user == null) break;
+
+			user.updateStatus(QueueStatus.ALLOWED);
+			userMap.put(user.getToken(), user);
+		}
+	}
+
 
 	public long getQueueNumber(String token) {
 		QueueUser user = userMap.get(token);
