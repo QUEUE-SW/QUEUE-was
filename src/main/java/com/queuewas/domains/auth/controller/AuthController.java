@@ -32,7 +32,7 @@ public class AuthController {
 		if (!queueStatus.equals(QueueStatus.ALLOWED)) {
 			throw new QueueException(QueueErrorCode.QUEUE_IS_NOT_ALLOWED);
 		}
-
+		queueService.notifyLogin(signInReq.uuid());
 		queueService.removeQueueInfo(signInReq.uuid());
 		SignInRes signInRes = authService.signIn(signInReq);
 
