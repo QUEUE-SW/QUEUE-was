@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.queuewas.common.response.SuccessResponse;
 import com.queuewas.domains.queue.dto.request.QueueJoinReq;
+import com.queuewas.domains.queue.dto.request.QueueReceiveReq;
 import com.queuewas.domains.queue.dto.response.QueueJoinRes;
 import com.queuewas.domains.queue.dto.response.QueueStatusRes;
 import com.queuewas.domains.queue.service.QueueService;
@@ -34,4 +35,11 @@ public class QueueController {
 		QueueStatusRes queueStatusRes = queueService.readStatus(uuid);
 		return ResponseEntity.ok(SuccessResponse.of(queueStatusRes));
 	}
+
+	@PostMapping("/notify")
+	public ResponseEntity<?> receiveSlotRelease(@RequestBody QueueReceiveReq queueReceiveReq) {
+		queueService.allowQueueStatus(queueReceiveReq.count());
+		return ResponseEntity.ok(SuccessResponse.noContent());
+	}
+
 }
