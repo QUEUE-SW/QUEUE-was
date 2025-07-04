@@ -14,6 +14,10 @@ public class QueueUser {
 	private long joinQueueNumber;
 	private QueueStatus status;
 
+	public void updateStatus(QueueStatus status) {
+		this.status = status;
+	}
+
 	public static QueueUser create(String token, long joinedAt, long joinQueueNumber) {
 		return new QueueUser(token, joinedAt, joinQueueNumber, QueueStatus.WAITING);
 	}
