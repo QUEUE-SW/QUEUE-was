@@ -1,16 +1,15 @@
 package com.queuewas.domains.queue.implement;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.springframework.stereotype.Component;
 
 import com.queuewas.common.annotation.Implementation;
 import com.queuewas.common.exception.queue.QueueErrorCode;
 import com.queuewas.common.exception.queue.QueueException;
 import com.queuewas.domains.queue.domain.QueueUser;
-import com.queuewas.domains.queue.type.QueueStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,6 +33,17 @@ public class QueueManager {
 		userMap.put(token, user);
 	}
 
+	public List<QueueUser> popUsers(int allowedCount) {
+		List<QueueUser> users = new ArrayList<>();
+		for (int i = 0; i < allowedCount; i++) {
+			QueueUser user = queue.poll();
+			if (user == null) break;
+			users.add(user);
+		}
+		return users;
+	}
+
+
 	public long getQueueNumber(String token) {
 		QueueUser user = userMap.get(token);
 
@@ -50,4 +60,7 @@ public class QueueManager {
 		userMap.remove(token);
 	}
 
+	public void requeue(QueueUser user) {
+		queue.add(user);
+	}
 }
