@@ -36,4 +36,12 @@ public class QueueService {
 
 		return QueueStatusRes.from(queueNumber, queueUser.getStatus());
 	}
+
+	public synchronized void allowQueueStatus(int count) {
+		queueManager.processQueue(count);
+	}
+
+	public void removeQueueInfo(String token) {
+		queueManager.remove(token);
+	}
 }
