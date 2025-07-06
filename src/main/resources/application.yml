@@ -8,8 +8,8 @@ spring:
     username: ${DATABASE_USERNAME:default}
     password: ${DATABASE_PASSWORD:default}
     hikari:
-      maximum-pool-size: 100
-      minimum-idle: 50
+      maximum-pool-size: 50
+      minimum-idle: 10
 
   profiles:
     active: local
@@ -56,5 +56,5 @@ logging:
     com.queuewas: info
     org.hibernate.sql: info
     # org.hibernate.orm.jdbc.bind: off
-    # com.zaxxer.hikari.HikariConfig: debug
+    com.zaxxer.hikari.HikariConfig: debug
     # com.zaxxer.hikari: trace
