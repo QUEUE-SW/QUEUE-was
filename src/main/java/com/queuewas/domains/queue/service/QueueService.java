@@ -58,11 +58,7 @@ public class QueueService {
 		String batchId = batchManager.registerBatch(users);
 		CompletableFuture<Void> future = batchManager.getFuture(batchId);
 
-		// 10초 후 도달한 인원만 확정
-		scheduler.schedule(() -> {
-			batchManager.completeBatchPartially(batchId);
-			scheduler.shutdown(); // 자원 해제
-		}, 10, TimeUnit.SECONDS);
+		scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
 
 		return future;
 	}
