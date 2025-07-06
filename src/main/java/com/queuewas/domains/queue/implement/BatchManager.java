@@ -64,4 +64,12 @@ public class BatchManager {
 		batchFutures.remove(batchId);
 		batchTokenMap.remove(batchId);
 	}
+
+	public void completeBatchPartially(String batchId) {
+		CompletableFuture<Void> future = batchFutures.get(batchId);
+		if (future != null && !future.isDone()) {
+			future.complete(null); // 남은 인원이 있더라도 그냥 완료시킴
+		}
+		removeBatch(batchId); // cleanup
+	}
 }

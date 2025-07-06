@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +21,11 @@ public class BatchConfig {
 	@Bean
 	public Map<String, Set<String>> batchTokenMap() {
 		return new ConcurrentHashMap<>();
+	}
+
+	@Bean
+	public ScheduledExecutorService scheduledExecutorService() {
+		return Executors.newScheduledThreadPool(5); // 요청이 몰릴 경우 대비
 	}
 
 }

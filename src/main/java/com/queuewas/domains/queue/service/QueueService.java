@@ -3,6 +3,8 @@ package com.queuewas.domains.queue.service;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 public class QueueService {
 	private final QueueManager queueManager;
 	private final BatchManager batchManager;
+	private final ScheduledExecutorService scheduler;
 
 
 	public QueueJoinRes join(QueueJoinReq queueJoinReq) {
@@ -53,14 +56,15 @@ public class QueueService {
 		}
 
 		String batchId = batchManager.registerBatch(users);
-		return batchManager.getFuture(batchId).
-			orTimeout(10, TimeUnit.SECONDS)
-			.whenComplete((v, e) -> {
-				if (e != null) {
-					this.rollbackBatch(batchId);
-				}
-				batchManager.removeBatch(batchId);
-			});
+		CompletableFuture<Void> future = batchManager.getFuture(batchId);
+
+		// 10초 후 도달한 인원만 확정
+		scheduler.schedule(() -> {
+			batchManager.completeBatchPartially(batchId);
+			scheduler.shutdown(); // 자원 해제
+		}, 10, TimeUnit.SECONDS);
+
+		return future;
 	}
 
 	public void notifyLogin(String token) {
