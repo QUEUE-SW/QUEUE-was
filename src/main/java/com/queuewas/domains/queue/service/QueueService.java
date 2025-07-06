@@ -55,20 +55,6 @@ public class QueueService {
 		return QueueStatusRes.from(queueNumber, queueUser.getStatus());
 	}
 
-	// public CompletableFuture<Void> allowQueueStatusWithAck(int count) {
-	// 	List<QueueUser> users = queueManager.popUsers(count);
-	// 	if (users.isEmpty()) {
-	// 		return CompletableFuture.completedFuture(null);
-	// 	}
-	//
-	// 	String batchId = batchManager.registerBatch(users);
-	// 	CompletableFuture<Void> future = batchManager.getFuture(batchId);
-	//
-	// 	scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
-	//
-	// 	return future;
-	// }
-
 	public CompletableFuture<Void> allowQueueStatusWithAck(int count) {
 		List<QueueUser> users = queueManager.popUsers(count);
 		if (users.isEmpty()) {
@@ -78,30 +64,11 @@ public class QueueService {
 		String batchId = batchManager.registerBatch(users);
 		CompletableFuture<Void> future = batchManager.getFuture(batchId);
 
-		final int batchSize = 30;
-		int totalBatches = (int) Math.ceil((double) users.size() / batchSize);
-
-		for (int i = 0; i < totalBatches; i++) {
-			int fromIndex = i * batchSize;
-			int toIndex = Math.min(fromIndex + batchSize, users.size());
-			List<QueueUser> subList = users.subList(fromIndex, toIndex);
-
-			long delay = i; // 초 단위 간격
-			scheduler.schedule(() -> {
-				for (QueueUser user : subList) {
-					user.updateStatus(QueueStatus.ALLOWED);
-				}
-			}, delay, TimeUnit.SECONDS);
-		}
-
-		// 10초 후 남은 유저들 롤백
-		scheduler.schedule(() -> {
-			rollbackBatch(batchId);
-			batchManager.completeBatchPartially(batchId);
-		}, 10, TimeUnit.SECONDS);
+		scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
 
 		return future;
 	}
+
 
 
 	public void notifyLogin(String token) {

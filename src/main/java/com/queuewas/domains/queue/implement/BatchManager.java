@@ -24,7 +24,7 @@ public class BatchManager {
 		Set<String> tokens = new HashSet<>();
 
 		for (QueueUser user : users) {
-			//user.updateStatus(QueueStatus.ALLOWED);
+			user.updateStatus(QueueStatus.ALLOWED);
 			user.updateBatchId(batchId);
 			tokens.add(user.getToken());
 		}
