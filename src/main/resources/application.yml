@@ -55,6 +55,6 @@ logging:
   level:
     com.queuewas: info
     org.hibernate.sql: info
-    org.hibernate.orm.jdbc.bind: off
-    com.zaxxer.hikari.HikariConfig: debug
-    com.zaxxer.hikari: trace
+    # org.hibernate.orm.jdbc.bind: off
+    # com.zaxxer.hikari.HikariConfig: debug
+    # com.zaxxer.hikari: trace

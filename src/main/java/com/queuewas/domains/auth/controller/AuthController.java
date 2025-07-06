@@ -17,7 +17,9 @@ import com.queuewas.domains.queue.type.QueueStatus;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -28,6 +30,7 @@ public class AuthController {
 
 	@PostMapping("/sign-in")
 	public ResponseEntity<?> signIn(@Valid @RequestBody SignInReq signInReq) {
+		log.info("[SignIn] identifier: {} password: {} uuid: {}", signInReq.identifier(), signInReq.password(), signInReq.uuid());
 		QueueStatus queueStatus = queueService.readStatus(signInReq.uuid()).queueStatus();
 		if (!queueStatus.equals(QueueStatus.ALLOWED)) {
 			throw new QueueException(QueueErrorCode.QUEUE_IS_NOT_ALLOWED);
@@ -36,6 +39,7 @@ public class AuthController {
 		queueService.removeQueueInfo(signInReq.uuid());
 		SignInRes signInRes = authService.signIn(signInReq);
 
+		log.info("AccessToken: {}", signInRes.accessToken());
 		return ResponseEntity.ok(SuccessResponse.of(signInRes));
 	}
 }
