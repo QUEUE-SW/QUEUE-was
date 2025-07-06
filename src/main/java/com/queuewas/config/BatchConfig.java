@@ -25,7 +25,7 @@ public class BatchConfig {
 
 	@Bean
 	public ScheduledExecutorService scheduledExecutorService() {
-		return Executors.newScheduledThreadPool(5); // 요청이 몰릴 경우 대비
+		return Executors.newScheduledThreadPool(10); // 요청이 몰릴 경우 대비
 	}
 
 }
