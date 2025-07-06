@@ -3,14 +3,17 @@ package com.queuewas.domains.queue.service;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import com.queuewas.common.exception.queue.QueueErrorCode;
 import com.queuewas.common.exception.queue.QueueException;
+import com.queuewas.common.response.SuccessResponse;
 import com.queuewas.domains.queue.domain.QueueUser;
 import com.queuewas.domains.queue.dto.request.QueueJoinReq;
 import com.queuewas.domains.queue.dto.response.QueueJoinRes;
@@ -20,13 +23,16 @@ import com.queuewas.domains.queue.implement.QueueManager;
 import com.queuewas.domains.queue.type.QueueStatus;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class QueueService {
 	private final QueueManager queueManager;
 	private final BatchManager batchManager;
 	private final ScheduledExecutorService scheduler;
+	private final RestTemplate restTemplate;
 
 
 	public QueueJoinRes join(QueueJoinReq queueJoinReq) {
@@ -74,14 +80,65 @@ public class QueueService {
 			}, delay, TimeUnit.SECONDS);
 		}
 
-		// 최종 실패 대비 롤백 예약
+		// 10초 후 남은 유저들 롤백
 		scheduler.schedule(() -> {
 			rollbackBatch(batchId);
 			batchManager.completeBatchPartially(batchId);
 		}, 10, TimeUnit.SECONDS);
 
-		return future;
+		return future.thenApply(v -> {
+			int loggedInCount = batchManager.getLoggedInCount(batchId);
+			notifyLoginSuccessToSessionServer(loggedInCount);
+			return null;
+		});
 	}
+
+	// public void handleQueueWithAck(int count, DeferredResult<ResponseEntity<?>> result) {
+	// 	List<QueueUser> users = queueManager.popUsers(count);
+	// 	if (users.isEmpty()) {
+	// 		result.setResult(ResponseEntity.ok(SuccessResponse.noContent()));
+	// 		return;
+	// 	}
+	//
+	// 	String batchId = batchManager.registerBatch(users);
+	// 	CompletableFuture<Void> future = batchManager.getFuture(batchId);
+	//
+	// 	// ✅ 1초 단위로 나눠서 ALLOWED 처리 (ex. 10명씩)
+	// 	final int batchSize = 10;
+	// 	int totalBatches = (int) Math.ceil((double) users.size() / batchSize);
+	//
+	// 	for (int i = 0; i < totalBatches; i++) {
+	// 		int from = i * batchSize;
+	// 		int to = Math.min(from + batchSize, users.size());
+	// 		List<QueueUser> batchUsers = users.subList(from, to);
+	//
+	// 		long delay = i; // 초 단위
+	// 		scheduler.schedule(() -> {
+	// 			for (QueueUser user : batchUsers) {
+	// 				user.updateStatus(QueueStatus.ALLOWED);
+	// 			}
+	// 		}, delay, TimeUnit.SECONDS);
+	// 	}
+	//
+	// 	// ✅ 정상 로그인 전부 완료되었을 경우
+	// 	future.thenAccept((v) -> {
+	// 		result.setResult(ResponseEntity.ok(SuccessResponse.noContent()));
+	// 	});
+	//
+	// 	// ✅ Timeout: 롤백 및 완료 처리
+	// 	result.onTimeout(() -> {
+	// 		rollbackBatch(batchId);
+	// 		batchManager.completeBatchPartially(batchId);
+	// 		result.setResult(ResponseEntity.ok(SuccessResponse.noContent()));
+	// 	});
+	//
+	// 	// ✅ 예외 발생 시
+	// 	result.onError((e) -> {
+	// 		rollbackBatch(batchId);
+	// 		batchManager.completeBatchPartially(batchId);
+	// 		result.setErrorResult(ResponseEntity.internalServerError().body("오류 발생"));
+	// 	});
+	// }
 
 	public void notifyLogin(String token) {
 		QueueUser user = queueManager.getQueueUser(token);
@@ -111,5 +168,16 @@ public class QueueService {
 
 	public void reset() {
 		queueManager.reset();
+	}
+
+	public void notifyLoginSuccessToSessionServer(int successCount) {
+		String url = "http://allclear-was-dev:8080/api/v1/session/notify-login-success?count=" + successCount;
+
+		try {
+			restTemplate.postForEntity(url, null, Void.class);
+			log.info("✅ 수강신청 서버에 로그인 성공 {}명 통보 완료", successCount);
+		} catch (Exception e) {
+			log.warn("🚨 수강신청 서버 통보 실패", e);
+		}
 	}
 }

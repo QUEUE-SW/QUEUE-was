@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class BatchManager {
 	private final Map<String, CompletableFuture<Void>> batchFutures;
 	private final Map<String, Set<String>> batchTokenMap;
+	private final Map<String, Integer> originalBatchSizeMap;
 
 	public String registerBatch(List<QueueUser> users) {
 		String batchId = UUID.randomUUID().toString();
@@ -32,6 +33,7 @@ public class BatchManager {
 		CompletableFuture<Void> future = new CompletableFuture<>();
 		batchFutures.put(batchId, future);
 		batchTokenMap.put(batchId, tokens);
+		originalBatchSizeMap.put(batchId, tokens.size());
 
 		return batchId;
 	}
@@ -63,6 +65,7 @@ public class BatchManager {
 	public void removeBatch(String batchId) {
 		batchFutures.remove(batchId);
 		batchTokenMap.remove(batchId);
+		originalBatchSizeMap.remove(batchId);
 	}
 
 	public void completeBatchPartially(String batchId) {
@@ -70,5 +73,11 @@ public class BatchManager {
 		if (future != null && !future.isDone()) {
 			future.complete(null); // 남은 인원이 있더라도 그냥 완료시킴
 		}
+	}
+
+	public int getLoggedInCount(String batchId) {
+		Set<String> tokens = batchTokenMap.get(batchId);
+		int total = originalBatchSizeMap.get(batchId);  // 예: 10명
+		return total - tokens.size();
 	}
 }

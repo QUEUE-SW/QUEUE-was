@@ -24,6 +24,11 @@ public class BatchConfig {
 	}
 
 	@Bean
+	public Map<String, Integer> originalBatchSizeMap() {
+		return new ConcurrentHashMap<>();
+	}
+
+	@Bean
 	public ScheduledExecutorService scheduledExecutorService() {
 		return Executors.newScheduledThreadPool(10); // 요청이 몰릴 경우 대비
 	}

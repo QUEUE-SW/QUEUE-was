@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
 
 import com.queuewas.common.response.SuccessResponse;
 import com.queuewas.domains.queue.dto.request.QueueJoinReq;
@@ -46,6 +47,15 @@ public class QueueController {
 		return queueService.allowQueueStatusWithAck(queueReceiveReq.count())
 			.thenApply(v -> ResponseEntity.ok(SuccessResponse.noContent()));
 	}
+
+	// @PostMapping("/notify")
+	// public DeferredResult<ResponseEntity<?>> receiveSlotRelease(@RequestBody QueueReceiveReq queueReceiveReq) {
+	// 	DeferredResult<ResponseEntity<?>> result = new DeferredResult<>(12_000L);
+	//
+	// 	queueService.handleQueueWithAck(queueReceiveReq.count(), result);
+	//
+	// 	return result;
+	// }
 
 	@GetMapping("/clear")
 	public ResponseEntity<?> clearQueue() {
