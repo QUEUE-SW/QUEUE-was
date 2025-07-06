@@ -63,4 +63,10 @@ public class QueueManager {
 	public void requeue(QueueUser user) {
 		queue.add(user);
 	}
+
+	public void reset() {
+		globalIndex.set(0);
+		queue.clear();
+		userMap.clear();
+	}
 }

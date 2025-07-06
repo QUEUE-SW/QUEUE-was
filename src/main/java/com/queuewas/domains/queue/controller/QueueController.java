@@ -47,4 +47,9 @@ public class QueueController {
 			.thenApply(v -> ResponseEntity.ok(SuccessResponse.noContent()));
 	}
 
+	@GetMapping("/clear")
+	public ResponseEntity<?> clearQueue() {
+		queueService.reset();
+		return ResponseEntity.ok(SuccessResponse.noContent());
+	}
 }

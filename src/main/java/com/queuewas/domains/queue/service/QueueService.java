@@ -88,4 +88,8 @@ public class QueueService {
 
 		batchManager.removeBatch(batchId);
 	}
+
+	public void reset() {
+		queueManager.reset();
+	}
 }
