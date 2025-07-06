@@ -86,11 +86,7 @@ public class QueueService {
 			batchManager.completeBatchPartially(batchId);
 		}, 10, TimeUnit.SECONDS);
 
-		return future.thenApply(v -> {
-			int loggedInCount = batchManager.getLoggedInCount(batchId);
-			notifyLoginSuccessToSessionServer(loggedInCount);
-			return null;
-		});
+		return future;
 	}
 
 	// public void handleQueueWithAck(int count, DeferredResult<ResponseEntity<?>> result) {
@@ -168,16 +164,5 @@ public class QueueService {
 
 	public void reset() {
 		queueManager.reset();
-	}
-
-	public void notifyLoginSuccessToSessionServer(int successCount) {
-		String url = "http://allclear-was-dev:8080/api/v1/session/notify-login-success?count=" + successCount;
-
-		try {
-			restTemplate.postForEntity(url, null, Void.class);
-			log.info("✅ 수강신청 서버에 로그인 성공 {}명 통보 완료", successCount);
-		} catch (Exception e) {
-			log.warn("🚨 수강신청 서버 통보 실패", e);
-		}
 	}
 }
