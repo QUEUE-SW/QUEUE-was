@@ -55,6 +55,20 @@ public class QueueService {
 		return QueueStatusRes.from(queueNumber, queueUser.getStatus());
 	}
 
+	// public CompletableFuture<Void> allowQueueStatusWithAck(int count) {
+	// 	List<QueueUser> users = queueManager.popUsers(count);
+	// 	if (users.isEmpty()) {
+	// 		return CompletableFuture.completedFuture(null);
+	// 	}
+	//
+	// 	String batchId = batchManager.registerBatch(users);
+	// 	CompletableFuture<Void> future = batchManager.getFuture(batchId);
+	//
+	// 	scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
+	//
+	// 	return future;
+	// }
+
 	public CompletableFuture<Void> allowQueueStatusWithAck(int count) {
 		List<QueueUser> users = queueManager.popUsers(count);
 		if (users.isEmpty()) {
@@ -64,57 +78,31 @@ public class QueueService {
 		String batchId = batchManager.registerBatch(users);
 		CompletableFuture<Void> future = batchManager.getFuture(batchId);
 
-		scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
+		final int batchSize = 30;
+		int totalBatches = (int) Math.ceil((double) users.size() / batchSize);
+
+		for (int i = 0; i < totalBatches; i++) {
+			int fromIndex = i * batchSize;
+			int toIndex = Math.min(fromIndex + batchSize, users.size());
+			List<QueueUser> subList = users.subList(fromIndex, toIndex);
+
+			long delay = i; // 초 단위 간격
+			scheduler.schedule(() -> {
+				for (QueueUser user : subList) {
+					user.updateStatus(QueueStatus.ALLOWED);
+				}
+			}, delay, TimeUnit.SECONDS);
+		}
+
+		// 10초 후 남은 유저들 롤백
+		scheduler.schedule(() -> {
+			rollbackBatch(batchId);
+			batchManager.completeBatchPartially(batchId);
+		}, 10, TimeUnit.SECONDS);
 
 		return future;
 	}
 
-	// public void handleQueueWithAck(int count, DeferredResult<ResponseEntity<?>> result) {
-	// 	List<QueueUser> users = queueManager.popUsers(count);
-	// 	if (users.isEmpty()) {
-	// 		result.setResult(ResponseEntity.ok(SuccessResponse.noContent()));
-	// 		return;
-	// 	}
-	//
-	// 	String batchId = batchManager.registerBatch(users);
-	// 	CompletableFuture<Void> future = batchManager.getFuture(batchId);
-	//
-	// 	// ✅ 1초 단위로 나눠서 ALLOWED 처리 (ex. 10명씩)
-	// 	final int batchSize = 10;
-	// 	int totalBatches = (int) Math.ceil((double) users.size() / batchSize);
-	//
-	// 	for (int i = 0; i < totalBatches; i++) {
-	// 		int from = i * batchSize;
-	// 		int to = Math.min(from + batchSize, users.size());
-	// 		List<QueueUser> batchUsers = users.subList(from, to);
-	//
-	// 		long delay = i; // 초 단위
-	// 		scheduler.schedule(() -> {
-	// 			for (QueueUser user : batchUsers) {
-	// 				user.updateStatus(QueueStatus.ALLOWED);
-	// 			}
-	// 		}, delay, TimeUnit.SECONDS);
-	// 	}
-	//
-	// 	// ✅ 정상 로그인 전부 완료되었을 경우
-	// 	future.thenAccept((v) -> {
-	// 		result.setResult(ResponseEntity.ok(SuccessResponse.noContent()));
-	// 	});
-	//
-	// 	// ✅ Timeout: 롤백 및 완료 처리
-	// 	result.onTimeout(() -> {
-	// 		rollbackBatch(batchId);
-	// 		batchManager.completeBatchPartially(batchId);
-	// 		result.setResult(ResponseEntity.ok(SuccessResponse.noContent()));
-	// 	});
-	//
-	// 	// ✅ 예외 발생 시
-	// 	result.onError((e) -> {
-	// 		rollbackBatch(batchId);
-	// 		batchManager.completeBatchPartially(batchId);
-	// 		result.setErrorResult(ResponseEntity.internalServerError().body("오류 발생"));
-	// 	});
-	// }
 
 	public void notifyLogin(String token) {
 		QueueUser user = queueManager.getQueueUser(token);

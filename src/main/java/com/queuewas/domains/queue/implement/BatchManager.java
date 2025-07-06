@@ -25,7 +25,7 @@ public class BatchManager {
 
 		for (QueueUser user : users) {
 			user.updateStatus(QueueStatus.ALLOWED);
-			user.updateBatchId(batchId);
+			//user.updateBatchId(batchId);
 			tokens.add(user.getToken());
 		}
 
