@@ -58,7 +58,10 @@ public class QueueService {
 		String batchId = batchManager.registerBatch(users);
 		CompletableFuture<Void> future = batchManager.getFuture(batchId);
 
-		scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
+		scheduler.schedule(() -> {
+			rollbackBatch(batchId);
+			batchManager.completeBatchPartially(batchId);
+		}, 10, TimeUnit.SECONDS);
 
 		return future;
 	}
