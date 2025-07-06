@@ -64,27 +64,7 @@ public class QueueService {
 		String batchId = batchManager.registerBatch(users);
 		CompletableFuture<Void> future = batchManager.getFuture(batchId);
 
-		final int batchSize = 30;
-		int totalBatches = (int) Math.ceil((double) users.size() / batchSize);
-
-		for (int i = 0; i < totalBatches; i++) {
-			int fromIndex = i * batchSize;
-			int toIndex = Math.min(fromIndex + batchSize, users.size());
-			List<QueueUser> subList = users.subList(fromIndex, toIndex);
-
-			long delay = i; // 초 단위 간격
-			scheduler.schedule(() -> {
-				for (QueueUser user : subList) {
-					user.updateStatus(QueueStatus.ALLOWED);
-				}
-			}, delay, TimeUnit.SECONDS);
-		}
-
-		// 10초 후 남은 유저들 롤백
-		scheduler.schedule(() -> {
-			rollbackBatch(batchId);
-			batchManager.completeBatchPartially(batchId);
-		}, 10, TimeUnit.SECONDS);
+		scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
 
 		return future;
 	}
@@ -165,4 +145,6 @@ public class QueueService {
 	public void reset() {
 		queueManager.reset();
 	}
+
+
 }
