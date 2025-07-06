@@ -47,7 +47,7 @@ public class QueueController {
 	// 	return queueService.allowQueueStatusWithAck(queueReceiveReq.count())
 	// 		.thenApply(v -> ResponseEntity.ok(SuccessResponse.noContent()));
 	// }
-	@PostMapping("/queue/notify")
+	@PostMapping("/notify")
 	public DeferredResult<ResponseEntity<?>> receiveSlotRelease(@RequestBody QueueReceiveReq req) {
 		DeferredResult<ResponseEntity<?>> result = new DeferredResult<>(60000L); // 60초
 
