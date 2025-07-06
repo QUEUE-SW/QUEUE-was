@@ -64,7 +64,7 @@ public class QueueService {
 		String batchId = batchManager.registerBatch(users);
 		CompletableFuture<Void> future = batchManager.getFuture(batchId);
 
-		final int batchSize = 10;
+		final int batchSize = 30;
 		int totalBatches = (int) Math.ceil((double) users.size() / batchSize);
 
 		for (int i = 0; i < totalBatches; i++) {

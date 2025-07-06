@@ -42,10 +42,23 @@ public class QueueController {
 		return ResponseEntity.ok(SuccessResponse.of(queueStatusRes));
 	}
 
-	@PostMapping("/notify")
-	public CompletableFuture<ResponseEntity<?>> receiveSlotRelease(@RequestBody QueueReceiveReq queueReceiveReq) {
-		return queueService.allowQueueStatusWithAck(queueReceiveReq.count())
-			.thenApply(v -> ResponseEntity.ok(SuccessResponse.noContent()));
+	// @PostMapping("/notify")
+	// public CompletableFuture<ResponseEntity<?>> receiveSlotRelease(@RequestBody QueueReceiveReq queueReceiveReq) {
+	// 	return queueService.allowQueueStatusWithAck(queueReceiveReq.count())
+	// 		.thenApply(v -> ResponseEntity.ok(SuccessResponse.noContent()));
+	// }
+	@PostMapping("/queue/notify")
+	public DeferredResult<ResponseEntity<?>> receiveSlotRelease(@RequestBody QueueReceiveReq req) {
+		DeferredResult<ResponseEntity<?>> result = new DeferredResult<>(60000L); // 60초
+
+		queueService.allowQueueStatusWithAck(req.count())
+			.thenAccept(v -> result.setResult(ResponseEntity.ok(SuccessResponse.noContent())))
+			.exceptionally(ex -> {
+				result.setErrorResult(ResponseEntity.status(500).body("Error occurred"));
+				return null;
+			});
+
+		return result;
 	}
 
 	// @PostMapping("/notify")
