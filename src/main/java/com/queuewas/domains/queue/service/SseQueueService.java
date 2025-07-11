@@ -2,6 +2,7 @@ package com.queuewas.domains.queue.service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -39,17 +40,19 @@ public class SseQueueService {
 		}
 
 		for (QueueUser user : users) {
-			String token = user.getToken();
-			SseEmitter emitter = emitterManager.getEmitter(token);
-			if (emitter != null) {
-				try {
-					emitter.send(SseEmitter.event()
-						.name("entrance")
-						.data("입장 가능합니다."));
-				} catch (IOException e) {
-					emitterManager.removeEmitter(token);
+			CompletableFuture.runAsync(() -> {
+				String token = user.getToken();
+				SseEmitter emitter = emitterManager.getEmitter(token);
+				if (emitter != null) {
+					try {
+						emitter.send(SseEmitter.event()
+							.name("entrance")
+							.data("입장 가능합니다."));
+					} catch (IOException e) {
+						emitterManager.removeEmitter(token);
+					}
 				}
-			}
+			});
 		}
 	}
 }
