@@ -9,25 +9,24 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import com.queuewas.common.response.SuccessResponse;
 import com.queuewas.domains.queue.dto.request.QueueJoinReq;
 import com.queuewas.domains.queue.dto.request.QueueReceiveReq;
 import com.queuewas.domains.queue.dto.response.QueueJoinRes;
 import com.queuewas.domains.queue.dto.response.QueueStatusRes;
-import com.queuewas.domains.queue.service.QueueService;
+import com.queuewas.domains.queue.service.PollingQueueService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/queue")
+@RequestMapping("/api/v1/queue/polling")
 @RequiredArgsConstructor
-public class QueueController {
+public class PollingQueueController {
 
-	private final QueueService queueService;
+	private final PollingQueueService queueService;
 
 	@PostMapping("/join")
 	public ResponseEntity<?> joinQueue(@RequestBody QueueJoinReq queueJoinReq) {

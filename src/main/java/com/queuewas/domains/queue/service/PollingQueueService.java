@@ -6,14 +6,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import com.queuewas.common.exception.queue.QueueErrorCode;
 import com.queuewas.common.exception.queue.QueueException;
-import com.queuewas.common.response.SuccessResponse;
 import com.queuewas.domains.queue.domain.QueueUser;
 import com.queuewas.domains.queue.dto.request.QueueJoinReq;
 import com.queuewas.domains.queue.dto.response.QueueJoinRes;
@@ -28,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class QueueService {
+public class PollingQueueService {
 	private final QueueManager queueManager;
 	private final BatchManager batchManager;
 	private final ScheduledExecutorService scheduler;
