@@ -39,20 +39,24 @@ public class SseQueueService {
 			return;
 		}
 
-		for (QueueUser user : users) {
-			CompletableFuture.runAsync(() -> {
-				String token = user.getToken();
-				SseEmitter emitter = emitterManager.getEmitter(token);
-				if (emitter != null) {
-					try {
-						emitter.send(SseEmitter.event()
-							.name("entrance")
-							.data("입장 가능합니다."));
-					} catch (IOException e) {
-						emitterManager.removeEmitter(token);
-					}
-				}
-			});
-		}
+		users.forEach(user -> {
+			final String token = user.getToken();
+			final SseEmitter emitter = emitterManager.getEmitter(token);
+			if(emitter == null) return;
+
+			sendEntranceMessageAsync(emitter, token);
+		});
+	}
+
+	private void sendEntranceMessageAsync(SseEmitter emitter, String token) {
+		CompletableFuture.runAsync(() -> {
+			try {
+				emitter.send(SseEmitter.event()
+					.name("entrance")
+					.data("입장 가능합니다."));
+			} catch (IOException e) {
+				emitterManager.removeEmitter(token);
+			}
+		});
 	}
 }
