@@ -30,6 +30,14 @@ public class SseQueueService {
 		emitter.onTimeout(() -> emitterManager.removeEmitter(token));
 		emitter.onError((e) -> emitterManager.removeEmitter(token));
 
+		try {
+			emitter.send(SseEmitter.event()
+				.name("connect")
+				.data("SSE 연결됨"));
+		} catch (IOException e) {
+			emitterManager.removeEmitter(token);
+		}
+
 		return emitter;
 	}
 
@@ -42,7 +50,8 @@ public class SseQueueService {
 		users.forEach(user -> {
 			final String token = user.getToken();
 			final SseEmitter emitter = emitterManager.getEmitter(token);
-			if(emitter == null) return;
+			if (emitter == null)
+				return;
 
 			sendEntranceMessageAsync(emitter, token);
 		});
