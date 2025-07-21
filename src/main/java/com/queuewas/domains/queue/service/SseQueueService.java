@@ -2,12 +2,18 @@ package com.queuewas.domains.queue.service;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.queuewas.common.exception.queue.QueueErrorCode;
+import com.queuewas.common.exception.queue.QueueException;
 import com.queuewas.domains.queue.domain.QueueUser;
+import com.queuewas.domains.queue.dto.response.QueueStatusRes;
+import com.queuewas.domains.queue.implement.BatchManager;
 import com.queuewas.domains.queue.implement.QueueManager;
 import com.queuewas.domains.queue.implement.SseEmitterManager;
 
@@ -21,51 +27,97 @@ public class SseQueueService {
 
 	private final SseEmitterManager emitterManager;
 	private final QueueManager queueManager;
+	private final BatchManager batchManager;
+	private final ScheduledExecutorService scheduler;
 
 	public SseEmitter subscribe(String token) {
-		SseEmitter emitter = new SseEmitter(60_000L);
+		// 대기열 등록
+		queueManager.enqueue(token);
+		long queueNumber = queueManager.getQueueNumber(token);
+
+		// SSEEmitter 생성 및 저장
+		SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
 		emitterManager.addEmitter(token, emitter);
 
+		// 초기 응답 전송 (WAITING + 순번)
+		sendToClient(emitter, "waiting", Map.of(
+			"status", "WAITING",
+			"number", queueNumber
+		));
+
+		// 연결 종료 핸들링
 		emitter.onCompletion(() -> emitterManager.removeEmitter(token));
 		emitter.onTimeout(() -> emitterManager.removeEmitter(token));
 		emitter.onError((e) -> emitterManager.removeEmitter(token));
 
-		try {
-			emitter.send(SseEmitter.event()
-				.name("connect")
-				.data("SSE 연결됨"));
-		} catch (IOException e) {
-			emitterManager.removeEmitter(token);
-		}
-
 		return emitter;
 	}
 
+	public QueueStatusRes readStatus(String token) {
+		QueueUser user = queueManager.getQueueUser(token);
+		if (user == null) {
+			throw new QueueException(QueueErrorCode.QUEUE_NOT_FOUND);
+		}
+
+		long queueNumber = queueManager.getQueueNumber(token);
+		return QueueStatusRes.from(queueNumber, user.getStatus());
+	}
+
 	public void notifyEntranceToUsers(int count) {
-		List<QueueUser> users = queueManager.popUsers(count);
-		if (users.isEmpty()) {
+		List<QueueUser> allowedUsers = queueManager.popUsers(count);
+		if (allowedUsers.isEmpty()) {
 			return;
 		}
 
-		users.forEach(user -> {
-			final String token = user.getToken();
-			final SseEmitter emitter = emitterManager.getEmitter(token);
-			if (emitter == null)
-				return;
+		String batchId = batchManager.registerBatch(allowedUsers);
 
-			sendEntranceMessageAsync(emitter, token);
-		});
-	}
-
-	private void sendEntranceMessageAsync(SseEmitter emitter, String token) {
-		CompletableFuture.runAsync(() -> {
-			try {
-				emitter.send(SseEmitter.event()
-					.name("entrance")
-					.data("입장 가능합니다."));
-			} catch (IOException e) {
-				emitterManager.removeEmitter(token);
+		// ALLOWED 사용자에게 전송 및 sse 종료
+		for (QueueUser user : allowedUsers) {
+			SseEmitter emitter = emitterManager.getEmitter(user.getToken());
+			if (emitter != null) {
+				sendToClient(emitter, "allowed", Map.of("status", "ALLOWED"));
+				emitter.complete();
+				emitterManager.removeEmitter(user.getToken());
 			}
-		});
+		}
+
+		// 일정 시간 후 배치 완료 처리
+		scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
+
+		// 대기 사용자에게 순번 변경 알림
+		List<QueueUser> waitingUsers = queueManager.getAllWaitingUsers();
+		for (QueueUser user : waitingUsers) {
+			long queueNumber = queueManager.getQueueNumber(user.getToken());
+			SseEmitter emitter = emitterManager.getEmitter(user.getToken());
+			if (emitter != null) {
+				sendToClient(emitter, "waiting", Map.of(
+					"status", "WAITING",
+					"number", queueNumber
+				));
+			}
+		}
 	}
+
+	public void notifyLogin(String token) {
+		QueueUser user = queueManager.getQueueUser(token);
+		batchManager.notifyUserLogin(token, user);
+		queueManager.remove(token);
+		emitterManager.removeEmitter(token);
+	}
+
+	public void removeQueueInfo(String token) {
+		queueManager.remove(token);
+		emitterManager.removeEmitter(token);
+	}
+
+	private void sendToClient(SseEmitter emitter, String event, Object data) {
+		try {
+			emitter.send(SseEmitter.event()
+				.name(event)
+				.data(data));
+		} catch (IOException e) {
+			log.warn("SSE send 실패: {}", e.getMessage());
+		}
+	}
+
 }
