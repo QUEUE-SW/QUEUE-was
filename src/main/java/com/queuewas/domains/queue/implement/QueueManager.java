@@ -56,6 +56,10 @@ public class QueueManager {
 		return userMap.getOrDefault(token, null);
 	}
 
+	public List<QueueUser> getAllWaitingUsers() {
+		return new ArrayList<>(queue);
+	}
+
 	public void remove(String token) {
 		userMap.remove(token);
 	}
