@@ -1,6 +1,5 @@
 package com.queuewas.domains.queue.service;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
@@ -15,6 +14,7 @@ import com.queuewas.domains.queue.domain.QueueUser;
 import com.queuewas.domains.queue.dto.response.QueueStatusRes;
 import com.queuewas.domains.queue.implement.BatchManager;
 import com.queuewas.domains.queue.implement.QueueManager;
+import com.queuewas.domains.queue.implement.SseAsyncSender;
 import com.queuewas.domains.queue.implement.SseEmitterManager;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +29,7 @@ public class SseQueueService {
 	private final QueueManager queueManager;
 	private final BatchManager batchManager;
 	private final ScheduledExecutorService scheduler;
+	private final SseAsyncSender asyncSender;
 
 	public SseEmitter subscribe(String token) {
 		// 대기열 등록
@@ -40,7 +41,7 @@ public class SseQueueService {
 		emitterManager.addEmitter(token, emitter);
 
 		// 초기 응답 전송 (WAITING + 순번)
-		sendToClient(emitter, "waiting", Map.of(
+		asyncSender.send(emitter, "waiting", Map.of(
 			"status", "WAITING",
 			"number", queueNumber
 		));
@@ -75,7 +76,7 @@ public class SseQueueService {
 		for (QueueUser user : allowedUsers) {
 			SseEmitter emitter = emitterManager.getEmitter(user.getToken());
 			if (emitter != null) {
-				sendToClient(emitter, "allowed", Map.of("status", "ALLOWED"));
+				asyncSender.send(emitter, "allowed", Map.of("status", "ALLOWED"));
 				emitter.complete();
 				emitterManager.removeEmitter(user.getToken());
 			}
@@ -90,7 +91,7 @@ public class SseQueueService {
 			long queueNumber = queueManager.getQueueNumber(user.getToken());
 			SseEmitter emitter = emitterManager.getEmitter(user.getToken());
 			if (emitter != null) {
-				sendToClient(emitter, "waiting", Map.of(
+				asyncSender.send(emitter, "waiting", Map.of(
 					"status", "WAITING",
 					"number", queueNumber
 				));
@@ -109,15 +110,4 @@ public class SseQueueService {
 		queueManager.remove(token);
 		emitterManager.removeEmitter(token);
 	}
-
-	private void sendToClient(SseEmitter emitter, String event, Object data) {
-		try {
-			emitter.send(SseEmitter.event()
-				.name(event)
-				.data(data));
-		} catch (IOException e) {
-			log.warn("SSE send 실패: {}", e.getMessage());
-		}
-	}
-
 }
