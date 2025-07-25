@@ -23,6 +23,7 @@ public class SseAsyncSender {
 				.name(event)
 				.data(data));
 			emitter.complete();
+			log.info("✅ send 성공!!");
 			emitterManager.removeEmitter(token);
 			log.info("✅ emitter 종료 및 제거 완료: token={}", token);
 		} catch (IOException e) {
