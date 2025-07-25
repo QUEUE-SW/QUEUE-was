@@ -22,15 +22,11 @@ public class SseAsyncSender {
 			emitter.send(SseEmitter.event()
 				.name(event)
 				.data(data));
-		} catch (IOException e) {
-			log.warn("🚨 SSE 전송 실패: event={}, message={}", event, e.getMessage());
-		} finally {
-			try {
-				emitter.complete();
-			} catch (Exception ignore) {
-			}
+			emitter.complete();
 			emitterManager.removeEmitter(token);
 			log.info("✅ emitter 종료 및 제거 완료: token={}", token);
+		} catch (IOException e) {
+			log.warn("🚨 SSE 전송 실패: event={}, message={}", event, e.getMessage());
 		}
 	}
 }
