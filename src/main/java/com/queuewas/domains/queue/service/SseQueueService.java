@@ -78,8 +78,6 @@ public class SseQueueService {
 			SseEmitter emitter = emitterManager.getEmitter(user.getToken());
 			if (emitter != null) {
 				asyncSender.send(emitter, "allowed", Map.of("status", "ALLOWED"), user.getToken());
-				emitter.complete();
-				emitterManager.removeEmitter(user.getToken());
 			}
 		}
 
