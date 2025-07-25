@@ -43,8 +43,9 @@ public class SseQueueService {
 		// 초기 응답 전송 (WAITING + 순번)
 		asyncSender.send(emitter, "waiting", Map.of(
 			"status", "WAITING",
-			"number", queueNumber
-		));
+			"number", queueNumber),
+			token
+		);
 
 		// 연결 종료 핸들링
 		emitter.onCompletion(() -> emitterManager.removeEmitter(token));
@@ -76,7 +77,7 @@ public class SseQueueService {
 		for (QueueUser user : allowedUsers) {
 			SseEmitter emitter = emitterManager.getEmitter(user.getToken());
 			if (emitter != null) {
-				asyncSender.send(emitter, "allowed", Map.of("status", "ALLOWED"));
+				asyncSender.send(emitter, "allowed", Map.of("status", "ALLOWED"), user.getToken());
 				emitter.complete();
 				emitterManager.removeEmitter(user.getToken());
 			}
@@ -93,8 +94,7 @@ public class SseQueueService {
 			if (emitter != null) {
 				asyncSender.send(emitter, "waiting", Map.of(
 					"status", "WAITING",
-					"number", queueNumber
-				));
+					"number", queueNumber), user.getToken());
 			}
 		}
 	}
