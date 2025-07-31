@@ -8,8 +8,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import com.queuewas.common.annotation.Implementation;
-import com.queuewas.domains.queue.domain.QueueUser;
-import com.queuewas.domains.queue.type.QueueStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,28 +17,22 @@ public class BatchManager {
 	private final Map<String, CompletableFuture<Void>> batchFutures;
 	private final Map<String, Set<String>> batchTokenMap;
 
-	public String registerBatch(List<QueueUser> users) {
+	public String registerBatch(List<String> users) {
 		String batchId = UUID.randomUUID().toString();
+
 		Set<String> tokens = new HashSet<>();
-
-		for (QueueUser user : users) {
-			user.updateStatus(QueueStatus.ALLOWED);
-			user.updateBatchId(batchId);
-			tokens.add(user.getToken());
-		}
-
 		CompletableFuture<Void> future = new CompletableFuture<>();
+
 		batchFutures.put(batchId, future);
 		batchTokenMap.put(batchId, tokens);
 
 		return batchId;
 	}
 
-	public void notifyUserLogin(String token, QueueUser user) {
-		if (user == null) return;
-
-		String batchId = user.getBatchId();
-		if (batchId == null) return;
+	public void notifyUserLogin(String token) {
+		String batchId = findBatchIdByToken(token);
+		if (batchId == null)
+			return;
 
 		Set<String> tokens = batchTokenMap.get(batchId);
 		if (tokens != null) {
@@ -50,6 +42,15 @@ public class BatchManager {
 				removeBatch(batchId);
 			}
 		}
+	}
+
+	private String findBatchIdByToken(String token) {
+		for (Map.Entry<String, Set<String>> entry : batchTokenMap.entrySet()) {
+			if (entry.getValue().contains(token)) {
+				return entry.getKey();
+			}
+		}
+		return null;
 	}
 
 	public CompletableFuture<Void> getFuture(String batchId) {
