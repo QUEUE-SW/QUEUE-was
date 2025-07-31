@@ -1,3 +1,4 @@
+/*
 package com.queuewas.domains.queue.service;
 
 import java.util.List;
@@ -30,7 +31,6 @@ public class PollingQueueService {
 	private final BatchManager batchManager;
 	private final ScheduledExecutorService scheduler;
 	private final RestTemplate restTemplate;
-
 
 	public QueueJoinRes join(QueueJoinReq queueJoinReq) {
 		String token = queueJoinReq.token();
@@ -66,8 +66,6 @@ public class PollingQueueService {
 		return future;
 	}
 
-
-
 	public void notifyLogin(String token) {
 		QueueUser user = queueManager.getQueueUser(token);
 		batchManager.notifyUserLogin(token, user);
@@ -81,7 +79,8 @@ public class PollingQueueService {
 	public void rollbackBatch(String batchId) {
 		Set<String> tokens = batchManager.getTokens(batchId);
 
-		if (tokens == null || tokens.isEmpty()) return;
+		if (tokens == null || tokens.isEmpty())
+			return;
 
 		for (String token : tokens) {
 			QueueUser user = queueManager.getQueueUser(token);
@@ -97,6 +96,5 @@ public class PollingQueueService {
 	public void reset() {
 		queueManager.reset();
 	}
-
-
 }
+*/

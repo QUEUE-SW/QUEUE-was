@@ -1,3 +1,4 @@
+/*
 package com.queuewas.domains.queue.controller;
 
 import java.util.concurrent.CompletableFuture;
@@ -54,3 +55,4 @@ public class PollingQueueController {
 		return ResponseEntity.ok(SuccessResponse.noContent());
 	}
 }
+*/
