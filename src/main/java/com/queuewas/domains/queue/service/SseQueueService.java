@@ -2,13 +2,10 @@ package com.queuewas.domains.queue.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.queuewas.domains.queue.implement.BatchManager;
 import com.queuewas.domains.queue.implement.RedisQueueManager;
 import com.queuewas.domains.queue.implement.SseAsyncSender;
 import com.queuewas.domains.queue.implement.SseEmitterManager;
@@ -23,8 +20,6 @@ public class SseQueueService {
 
 	private final SseEmitterManager emitterManager;
 	private final RedisQueueManager redisQueueManager;
-	private final BatchManager batchManager;
-	private final ScheduledExecutorService scheduler;
 	private final SseAsyncSender asyncSender;
 
 	public SseEmitter subscribe(String token) {
@@ -57,8 +52,6 @@ public class SseQueueService {
 			return;
 		}
 
-		String batchId = batchManager.registerBatch(allowedTokens);
-
 		// ALLOWED 사용자에게 전송 및 sse 종료
 		for (String token : allowedTokens) {
 			SseEmitter emitter = emitterManager.getEmitter(token);
@@ -66,9 +59,6 @@ public class SseQueueService {
 				asyncSender.send(emitter, "allowed", Map.of("status", "ALLOWED"), token);
 			}
 		}
-
-		// 일정 시간 후 배치 완료 처리
-		scheduler.schedule(() -> batchManager.completeBatchPartially(batchId), 10, TimeUnit.SECONDS);
 
 		// 대기 사용자에게 순번 변경 알림
 		List<String> waitingTokens = redisQueueManager.getAllWaitingTokens();
@@ -84,7 +74,6 @@ public class SseQueueService {
 	}
 
 	public void notifyLogin(String token) {
-		batchManager.notifyUserLogin(token);
 		redisQueueManager.remove(token);
 		emitterManager.removeEmitter(token);
 	}

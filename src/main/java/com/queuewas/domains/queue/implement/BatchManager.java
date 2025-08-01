@@ -1,3 +1,4 @@
+/*
 package com.queuewas.domains.queue.implement;
 
 import java.util.HashSet;
@@ -75,3 +76,4 @@ public class BatchManager {
 	}
 
 }
+*/
