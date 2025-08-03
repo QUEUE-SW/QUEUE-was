@@ -15,6 +15,7 @@ spring:
    redis:
      host: ${REDIS_HOST:default}
      port: ${REDIS_PORT:6379}
+     ssl: true
 
   profiles:
     active: dev
