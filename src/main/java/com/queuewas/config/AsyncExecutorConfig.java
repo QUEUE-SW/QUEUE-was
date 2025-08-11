@@ -14,9 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 @EnableAsync
 public class AsyncExecutorConfig {
 
-	private static final int CORE_POOL_SIZE = 16;
-	private static final int MAX_POOL_SIZE = 64;
-	private static final int QUEUE_CAPACITY = 800;
+	private static final int CORE_POOL_SIZE = 6;
+	private static final int MAX_POOL_SIZE = 24;
+	private static final int QUEUE_CAPACITY = 200;
 	private static final String THREAD_NAME_PREFIX = "SSE-Async-";
 
 	@Bean(name = "sseAsyncExecutor")
