@@ -32,9 +32,12 @@ public class PollingQueueService {
 	}
 
 	public QueueStatusRes readStatus(String token) {
+		if (redisQueueManager.isAllowed(token)) {
+			return QueueStatusRes.from(0L, QueueStatus.ALLOWED);
+		}
+
 		long queueNumber = redisQueueManager.getQueueNumber(token);
-		return (queueNumber == 0L) ? QueueStatusRes.from(0L, QueueStatus.ALLOWED) :
-			QueueStatusRes.from(queueNumber, QueueStatus.WAITING);
+		return QueueStatusRes.from(queueNumber, QueueStatus.WAITING);
 	}
 
 	public void notifyEntranceToUsers(int count) {
