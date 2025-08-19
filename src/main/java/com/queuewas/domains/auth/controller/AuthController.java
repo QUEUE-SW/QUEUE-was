@@ -10,7 +10,7 @@ import com.queuewas.common.response.SuccessResponse;
 import com.queuewas.domains.auth.dto.request.SignInReq;
 import com.queuewas.domains.auth.dto.response.SignInRes;
 import com.queuewas.domains.auth.service.AuthService;
-import com.queuewas.domains.queue.service.SseQueueService;
+import com.queuewas.domains.queue.service.PollingQueueService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthController {
 
 	private final AuthService authService;
-	private final SseQueueService queueService;
+	private final PollingQueueService queueService;
 
 	@PostMapping("/sign-in")
 	public ResponseEntity<?> signIn(@Valid @RequestBody SignInReq signInReq) {
@@ -31,7 +31,6 @@ public class AuthController {
 			signInReq.uuid());
 
 		queueService.notifyLogin(signInReq.uuid());
-		queueService.removeQueueInfo(signInReq.uuid());
 		SignInRes signInRes = authService.signIn(signInReq);
 
 		log.info("AccessToken: {}", signInRes.accessToken());
