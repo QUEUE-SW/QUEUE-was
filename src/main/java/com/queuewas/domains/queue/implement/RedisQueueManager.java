@@ -17,28 +17,22 @@ import lombok.RequiredArgsConstructor;
 public class RedisQueueManager {
 
 	private final StringRedisTemplate redisTemplate;
-	private final static String QUEUE_KEY = "queue:waiting";
+	private static final String KEY_WAITING = "queue:waiting";
+	private static final String KEY_ALLOWED = "queue:allowed";
 
 	public void enqueue(String token) {
-		redisTemplate.opsForList().rightPush(QUEUE_KEY, token);
+		redisTemplate.opsForList().rightPush(KEY_WAITING, token);
 	}
 
 	public List<String> popTokens(int count) {
 		List<String> tokens = new ArrayList<>();
 		for (int i = 0; i < count; i++) {
-			String token = redisTemplate.opsForList().leftPop(QUEUE_KEY);
+			String token = redisTemplate.opsForList().leftPop(KEY_WAITING);
 			if (token == null)
 				break;
 			tokens.add(token);
 		}
 		return tokens;
-	}
-
-	public List<String> getAllWaitingTokens() {
-		Long size = redisTemplate.opsForList().size(QUEUE_KEY);
-		if (size == null)
-			return List.of();
-		return redisTemplate.opsForList().range(QUEUE_KEY, 0, size - 1);
 	}
 
 	public long getQueueNumber(String token) {
@@ -51,11 +45,25 @@ public class RedisQueueManager {
 		return index + 1;
 	}
 
+	public boolean isAllowed(String token) {
+		Boolean isMember = redisTemplate.opsForSet().isMember(KEY_ALLOWED, token);
+		return Boolean.TRUE.equals(isMember);
+	}
+
+	public void markAllowed(List<String> tokens) {
+		redisTemplate.opsForSet().add(KEY_ALLOWED, tokens.toArray(new String[0]));
+	}
+
+	public void unmarkAllowed(String token) {
+		redisTemplate.opsForSet().remove(KEY_ALLOWED, token);
+	}
+
 	public void remove(String token) {
-		redisTemplate.opsForList().remove(QUEUE_KEY, 1, token);
+		redisTemplate.opsForList().remove(KEY_WAITING, 1, token);
 	}
 
 	public void reset() {
-		redisTemplate.delete(QUEUE_KEY);
+		redisTemplate.delete(KEY_WAITING);
+		redisTemplate.delete(KEY_ALLOWED);
 	}
 }

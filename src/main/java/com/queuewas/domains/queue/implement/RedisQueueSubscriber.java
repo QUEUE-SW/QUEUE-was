@@ -6,7 +6,7 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.stereotype.Component;
 
-import com.queuewas.domains.queue.service.SseQueueService;
+import com.queuewas.domains.queue.service.PollingQueueService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class RedisQueueSubscriber implements MessageListener {
 
-	private final SseQueueService sseQueueService;
+	private final PollingQueueService pollingQueueService;
 
 	@Override
 	public void onMessage(Message message, byte[] pattern) {
@@ -25,7 +25,7 @@ public class RedisQueueSubscriber implements MessageListener {
 
 		try {
 			int count = Integer.parseInt(msg);
-			sseQueueService.notifyEntranceToUsers(count);
+			pollingQueueService.notifyEntranceToUsers(count);
 		} catch (NumberFormatException e) {
 			log.warn("❗ 메시지 형식이 잘못되었습니다: {}", msg);
 		}

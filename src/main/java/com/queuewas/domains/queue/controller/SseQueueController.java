@@ -1,3 +1,4 @@
+/*
 package com.queuewas.domains.queue.controller;
 
 import org.springframework.http.MediaType;
@@ -37,3 +38,4 @@ public class SseQueueController {
 		return ResponseEntity.ok(SuccessResponse.noContent());
 	}
 }
+*/
